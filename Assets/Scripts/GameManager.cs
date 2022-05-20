@@ -1,25 +1,30 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
+using UniRx;
 
 public class GameManager : MonoBehaviour
 {
+    private readonly CompositeDisposable _subscriptions = new CompositeDisposable();
+
     [SerializeField] private int _fieldX;
     [SerializeField] private int _fieldY;
     // TODO spawn
     [SerializeField] private GridLayoutGroup _field;
     [SerializeField] private RectTransform _tilePrefab;
-    // TODO dynamic
-    [SerializeField] private Button _wheatSpawn;
+    [SerializeField] private Button _spawnButton;
+    [SerializeField] private ResourceConfig _resourceConfig;
+    [SerializeField] private ResourceProducerConfig _resourceProducerConfig;
 
     private RectTransform[,] _fieldContents;
-    private ResourceProducer _selectedProducer;
+    private string _selectedProducer;
 
     void Start()
     {
         InitField();
-        SubscribeOnSpawnButtons();
+        CreateSpawnButtons();
     }
 
     private void InitField() {
@@ -37,17 +42,25 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void SubscribeOnSpawnButtons() {
-        _wheatSpawn.onClick.AddListener(() => _selectedProducer = ResourceProducer.Wheat);
+    private void CreateSpawnButtons() {
+        _spawnButton.gameObject.SetActive(false);
+        foreach (var conf in _resourceProducerConfig.ResourceProducers) {
+            var newButton = Instantiate(_spawnButton, _spawnButton.transform.parent);
+            newButton.gameObject.SetActive(true);
+            // TODO init
+            newButton.GetComponentInChildren<Text>().text = conf.Name;
+            newButton.OnClickAsObservable()
+                .Subscribe(_ => _selectedProducer = conf.Name)
+                .AddTo(_subscriptions);
+        }        
     }
 
     private void SpawnProducer(RectTransform tile) {
-        tile.GetChild(0).gameObject.SetActive(true);
+        var producerType = _resourceProducerConfig.ResourceProducers.FirstOrDefault(x => x.Name == _selectedProducer);
+        if (producerType != null) {
+            var model = new ResourceProducerModel(producerType.ProducedResource, producerType.ProduceAmount, producerType.ProduceTime);
+            var view = Instantiate(producerType.SpawnObject, tile.transform);
+            view.Initialize(model);
+        }
     }
-}
-
-public enum ResourceProducer {
-    Wheat,
-    Chicken,
-    Cow
 }

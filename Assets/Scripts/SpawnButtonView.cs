@@ -4,5 +4,5 @@ using UnityEngine;
 
 public class SpawnButtonView : MonoBehaviour
 {
-    [SerializeField] private ResourceProducer _spawnedType;
+    [SerializeField] private string _spawnedType;
 }
