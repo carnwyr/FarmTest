@@ -5,4 +5,6 @@ using UnityEngine;
 public class ResourceConfig : ScriptableObject
 {
     [SerializeField] private List<ResourceData> _resources;
+
+    public List<ResourceData> Resources => _resources;
 }

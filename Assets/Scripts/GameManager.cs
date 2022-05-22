@@ -1,44 +1,56 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Linq;
 using UniRx;
 
 public class GameManager : MonoBehaviour
 {
-    private readonly CompositeDisposable _subscriptions = new CompositeDisposable();
-
     [SerializeField] private int _fieldX;
     [SerializeField] private int _fieldY;
     // TODO spawn
     [SerializeField] private GridLayoutGroup _field;
-    [SerializeField] private RectTransform _tilePrefab;
+    [SerializeField] private FieldTileView _tilePrefab;
     [SerializeField] private Button _spawnButton;
+    [SerializeField] private ResourceView _resourceCounter;
     [SerializeField] private ResourceConfig _resourceConfig;
     [SerializeField] private ResourceProducerConfig _resourceProducerConfig;
 
-    private RectTransform[,] _fieldContents;
-    private string _selectedProducer;
+    private readonly CompositeDisposable _subscriptions = new CompositeDisposable();
+    
+    private ResourceController _resourceController;
+    private ResourceProducerFactory _producerFactory;
 
     void Start()
     {
+        _resourceController = new ResourceController(_resourceConfig);
+        _producerFactory = new ResourceProducerFactory(_resourceController);
+
         InitField();
+        CreateResourceCounters();
         CreateSpawnButtons();
     }
 
     private void InitField() {
-        _field.cellSize = _tilePrefab.sizeDelta;
+        _field.cellSize = _tilePrefab.GetComponent<RectTransform>().rect.size;
         _field.constraintCount = _fieldX;
-
-        _fieldContents = new RectTransform[_fieldX, _fieldY];
 
         for (var i = 0; i < _fieldX; i++) {
             for (var j = 0; j < _fieldY; j++) {
-                var go = Instantiate(_tilePrefab, _field.transform);
-                _fieldContents[i, j] = go;
-                go.GetComponent<Button>().onClick.AddListener(() => SpawnProducer(go));
+                var model = new FieldTileModel(_producerFactory);
+                var view = Instantiate(_tilePrefab, _field.transform);
+                view.Initialize(model);
+                view.AddTo(_subscriptions);
             }
+        }
+    }
+
+    private void CreateResourceCounters() {
+        _resourceCounter.gameObject.SetActive(false);
+        foreach (var resource in _resourceController.Resources) {
+            var model = new ResourceModel(resource.Key, resource.Value);
+            var view = Instantiate(_resourceCounter, _resourceCounter.transform.parent);
+            view.Initialize(model);
+            view.gameObject.SetActive(true);
         }
     }
 
@@ -50,17 +62,27 @@ public class GameManager : MonoBehaviour
             // TODO init
             newButton.GetComponentInChildren<Text>().text = conf.Name;
             newButton.OnClickAsObservable()
-                .Subscribe(_ => _selectedProducer = conf.Name)
+                .Subscribe(_ => _producerFactory.SetProducerData(conf))
                 .AddTo(_subscriptions);
         }        
     }
+}
 
-    private void SpawnProducer(RectTransform tile) {
-        var producerType = _resourceProducerConfig.ResourceProducers.FirstOrDefault(x => x.Name == _selectedProducer);
-        if (producerType != null) {
-            var model = new ResourceProducerModel(producerType.ProducedResource, producerType.ProduceAmount, producerType.ProduceTime);
-            var view = Instantiate(producerType.SpawnObject, tile.transform);
-            view.Initialize(model);
+public class ResourceController {
+    private readonly Dictionary<string, ReactiveProperty<int>> _resources = new Dictionary<string, ReactiveProperty<int>>();
+
+    // TODO remove
+    public Dictionary<string, ReactiveProperty<int>> Resources => _resources;
+
+    public ResourceController(ResourceConfig resourceConfig) {
+        foreach (var resource in resourceConfig.Resources) {
+            _resources.Add(resource.Name, new ReactiveProperty<int>());
+        }
+    }
+
+    public void AddResource(string resource, int amount) {
+        if (_resources.ContainsKey(resource)) {
+            _resources[resource].Value += amount;
         }
     }
 }

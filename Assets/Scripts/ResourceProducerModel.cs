@@ -2,8 +2,11 @@ using System;
 using UniRx;
 using UnityEngine;
 
-public class ResourceProducerModel
+public class ResourceProducerModel : IDisposable
 {
+    private readonly ResourceController _resourceController;
+
+    private string _name;
     private string _resource;
     private int _produceAmount;
     private int _produceTime;
@@ -11,10 +14,13 @@ public class ResourceProducerModel
 
     public ReactiveProperty<float> ProduceProgress { get; } = new ReactiveProperty<float>();
 
-    public ResourceProducerModel(string resource, int amount, int time) {
-        _resource = resource;
-        _produceAmount = amount;
-        _produceTime = time;
+    public ResourceProducerModel(ResourceProducerData data, ResourceController resourceController) {
+        _resourceController = resourceController;
+
+        _name = data.Name;
+        _resource = data.ProducedResource;
+        _produceAmount = data.ProduceAmount;
+        _produceTime = data.ProduceTime;
 
         Produce();
     }
@@ -26,13 +32,20 @@ public class ResourceProducerModel
                 var timeLeft = (float)(productionEndTime - DateTime.UtcNow).TotalSeconds;
                 var fractionLeft = Mathf.Clamp(timeLeft, 0, _produceTime) / _produceTime;
                 ProduceProgress.Value = 1 - fractionLeft;
-                if (ProduceProgress.Value == 1) {
+                if (Mathf.Approximately(ProduceProgress.Value, 1)) {
                     _productionCycle?.Dispose();
                 }
             });
     }
 
-    private void OnDestroy() {
+    public void TryCollect() {
+        if (Mathf.Approximately(ProduceProgress.Value, 1)) {
+            _resourceController.AddResource(_resource, _produceAmount);
+            Produce();
+        }
+    }
+
+    public void Dispose() {
         _productionCycle?.Dispose();
         ProduceProgress.Dispose();
     }
