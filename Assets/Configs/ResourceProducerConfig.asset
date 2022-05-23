@@ -15,11 +15,11 @@ MonoBehaviour:
   _resourceProducers:
   - _name: Wheat
     _produceAmount: 1
-    _produceTime: 10
-    _producedResource: Wheat
-    _spawnObject: {fileID: 8492305237754244994, guid: ce3b50c76ff63be479f375a83082b519, type: 3}
-  - _name: SuperWheat
-    _produceAmount: 1
     _produceTime: 1
     _producedResource: Wheat
+    _spawnObject: {fileID: 8492305237754244994, guid: ce3b50c76ff63be479f375a83082b519, type: 3}
+  - _name: Cow
+    _produceAmount: 1
+    _produceTime: 20
+    _producedResource: Milk
     _spawnObject: {fileID: 8492305237754244994, guid: ce3b50c76ff63be479f375a83082b519, type: 3}

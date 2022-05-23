@@ -18,7 +18,7 @@ public class FieldTileModel : IDisposable
             SpawnProducer();
         }
         else {
-            _producer.Value.TryCollect();
+            _producer.Value.OnTap();
         }
     }
   

@@ -85,4 +85,12 @@ public class ResourceController {
             _resources[resource].Value += amount;
         }
     }
+
+    public bool TrySpendResource(string resource, int amount) {
+        if (_resources.ContainsKey(resource) && _resources[resource].Value >= amount) {
+            _resources[resource].Value -= amount;
+            return true;
+        }
+        return false;
+    }
 }
