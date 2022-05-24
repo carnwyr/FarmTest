@@ -20,6 +20,9 @@ public class ResourceProducerModel : IDisposable
     private ReactiveProperty<int> _productionCyclesCount = new ReactiveProperty<int>();
 
     public ReactiveProperty<float> ProduceProgress { get; } = new ReactiveProperty<float>();
+    public ReactiveProperty<float> ConsumableLeft { get; } = new ReactiveProperty<float>();
+
+    public bool NeedsConsumable { get; }
 
     public ResourceProducerModel(ResourceProducerData data, ResourceController resourceController) {
         _resourceController = resourceController;
@@ -31,6 +34,8 @@ public class ResourceProducerModel : IDisposable
         _produceResource = data.ProduceResource;
         _produceAmount = data.ProduceAmount;
         _produceTime = data.ProduceTime;
+
+        NeedsConsumable = !string.IsNullOrEmpty(_consumeResource);
 
         Produce().Forget();
     }
@@ -47,7 +52,7 @@ public class ResourceProducerModel : IDisposable
     private async UniTask Produce() {
         ProduceProgress.Value = 0;
         _consumeCycle = _productionCyclesCount
-            .Where(x => x > 0 || string.IsNullOrEmpty(_consumeResource))
+            .Where(x => x > 0 || !NeedsConsumable)
             .First()
             .ToUniTask();
         await _consumeCycle;
@@ -57,9 +62,17 @@ public class ResourceProducerModel : IDisposable
                 var timeLeft = (float)(productionEndTime - DateTime.UtcNow).TotalSeconds;
                 var fractionLeft = Mathf.Clamp(timeLeft, 0, _produceTime) / _produceTime;
                 ProduceProgress.Value = 1 - fractionLeft;
+
+                if (NeedsConsumable)
+                {
+                    var totalCycles = _consumeTime / _produceTime;
+                    var currentCycleLeft = 1f / totalCycles * fractionLeft;
+                    ConsumableLeft.Value = (float)(_productionCyclesCount.Value - 1) / totalCycles + currentCycleLeft;
+                }
+
                 if (Mathf.Approximately(ProduceProgress.Value, 1)) {
                     _productionCycle?.Dispose();
-                    if (!string.IsNullOrEmpty(_consumeResource))
+                    if (NeedsConsumable)
                     {
                         _productionCyclesCount.Value--;
                     }
@@ -69,7 +82,7 @@ public class ResourceProducerModel : IDisposable
 
     private void Consume() 
     {
-        if (string.IsNullOrEmpty(_consumeResource)) {
+        if (!NeedsConsumable) {
             return;
         }
 
