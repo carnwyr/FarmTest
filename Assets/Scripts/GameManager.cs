@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GridLayoutGroup _field;
     [SerializeField] private FieldTileView _tilePrefab;
     [SerializeField] private Button _spawnButton;
+    [SerializeField] private Button _sellButton;
     [SerializeField] private ResourceView _resourceCounter;
     [SerializeField] private ResourceConfig _resourceConfig;
     [SerializeField] private ResourceProducerConfig _resourceProducerConfig;
@@ -28,6 +29,7 @@ public class GameManager : MonoBehaviour
         InitField();
         CreateResourceCounters();
         CreateSpawnButtons();
+        CreateSellButtons();
     }
 
     private void InitField() {
@@ -66,6 +68,23 @@ public class GameManager : MonoBehaviour
                 .AddTo(_subscriptions);
         }        
     }
+
+    private void CreateSellButtons() {
+        _sellButton.gameObject.SetActive(false);
+        foreach (var conf in _resourceConfig.Resources) {
+            if (string.IsNullOrEmpty(conf.PriceResource)) {
+                continue;
+            }
+
+            var newButton = Instantiate(_sellButton, _sellButton.transform.parent);
+            newButton.gameObject.SetActive(true);
+            // TODO init
+            newButton.GetComponentInChildren<Text>().text = conf.Name;
+            newButton.OnClickAsObservable()
+                .Subscribe(_ => _resourceController.Sell(conf))
+                .AddTo(_subscriptions);
+        }        
+    }
 }
 
 public class ResourceController {
@@ -92,5 +111,11 @@ public class ResourceController {
             return true;
         }
         return false;
+    }
+
+    public void Sell(ResourceData data) {
+        var amount = _resources[data.Name].Value;
+        TrySpendResource(data.Name, amount);
+        AddResource(data.PriceResource, data.Price * amount);
     }
 }
