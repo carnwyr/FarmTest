@@ -2,48 +2,35 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UniRx;
+using System;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private int _fieldX;
-    [SerializeField] private int _fieldY;
-    // TODO spawn
-    [SerializeField] private GridLayoutGroup _field;
-    [SerializeField] private FieldTileView _tilePrefab;
     [SerializeField] private Button _spawnButton;
     [SerializeField] private Button _sellButton;
     [SerializeField] private ResourceView _resourceCounter;
     [SerializeField] private ResourceConfig _resourceConfig;
     [SerializeField] private ResourceProducerConfig _resourceProducerConfig;
+    [SerializeField] private LevelConfig _levelConfig;
+    [SerializeField] private Canvas _fieldCanvas;
 
     private readonly CompositeDisposable _subscriptions = new CompositeDisposable();
     
     private ResourceController _resourceController;
+    private LevelController _levelController;
     private ResourceProducerFactory _producerFactory;
 
     void Start()
     {
         _resourceController = new ResourceController(_resourceConfig);
         _producerFactory = new ResourceProducerFactory(_resourceController);
-
-        InitField();
+        _levelController = new LevelController(_levelConfig, _producerFactory, _fieldCanvas);
+        
         CreateResourceCounters();
         CreateSpawnButtons();
         CreateSellButtons();
-    }
 
-    private void InitField() {
-        _field.cellSize = _tilePrefab.GetComponent<RectTransform>().rect.size;
-        _field.constraintCount = _fieldX;
-
-        for (var i = 0; i < _fieldX; i++) {
-            for (var j = 0; j < _fieldY; j++) {
-                var model = new FieldTileModel(_producerFactory);
-                var view = Instantiate(_tilePrefab, _field.transform);
-                view.Initialize(model);
-                view.AddTo(_subscriptions);
-            }
-        }
+        _levelController.StartNextLevel();
     }
 
     private void CreateResourceCounters() {
@@ -87,35 +74,41 @@ public class GameManager : MonoBehaviour
     }
 }
 
-public class ResourceController {
-    private readonly Dictionary<string, ReactiveProperty<int>> _resources = new Dictionary<string, ReactiveProperty<int>>();
+public class LevelController {
+    private readonly LevelConfig _config;
+    private readonly ResourceProducerFactory _producerFactory;
 
-    // TODO remove
-    public Dictionary<string, ReactiveProperty<int>> Resources => _resources;
+    private GridLayoutGroup _field;
+    private int _currentLevel;
 
-    public ResourceController(ResourceConfig resourceConfig) {
-        foreach (var resource in resourceConfig.Resources) {
-            _resources.Add(resource.Name, new ReactiveProperty<int>());
-        }
+    public LevelController(LevelConfig config, ResourceProducerFactory producerFactory, Canvas canvas) {
+        _config = config;
+        _producerFactory = producerFactory;
+
+        _field = UnityEngine.Object.Instantiate(_config.FieldPrefab, canvas.transform);
     }
 
-    public void AddResource(string resource, int amount) {
-        if (_resources.ContainsKey(resource)) {
-            _resources[resource].Value += amount;
-        }
+    public void StartNextLevel() {
+        InitField();
     }
 
-    public bool TrySpendResource(string resource, int amount) {
-        if (_resources.ContainsKey(resource) && _resources[resource].Value >= amount) {
-            _resources[resource].Value -= amount;
-            return true;
-        }
-        return false;
-    }
+    private void InitField() {
+        var sizeX = _config.Levels[_currentLevel].SizeX;
+        var sizeY = _config.Levels[_currentLevel].SizeY;
+        // TODO alter cell size according to the screen size
+        _field.cellSize = _config.TilePrefab.GetComponent<RectTransform>().rect.size;
+        _field.constraintCount = sizeX;
 
-    public void Sell(ResourceData data) {
-        var amount = _resources[data.Name].Value;
-        TrySpendResource(data.Name, amount);
-        AddResource(data.PriceResource, data.Price * amount);
+        for (var i = 0; i < sizeX; i++) {
+            for (var j = 0; j < sizeY; j++) {
+                var model = new FieldTileModel(_producerFactory);
+                // TODO tile pooling
+                var view = UnityEngine.Object.Instantiate(_config.TilePrefab, _field.transform);
+                view.Initialize(model);
+            }
+        }
     }
 }
+
+
+

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b8a920da25dbc2439ad4bdf8ab718df, type: 3}
+  m_Name: LevelConfig
+  m_EditorClassIdentifier: 
+  _fieldPrefab: {fileID: 730141848142428609, guid: dc67b7ad131e57242bb1c09812a10030, type: 3}
+  _tilePrefab: {fileID: 1615694749800862223, guid: abee68703a6692e43a7628cd6dcc07be, type: 3}
+  _levels:
+  - _sizeX: 5
+    _sizeY: 5
+    _goal: 10
