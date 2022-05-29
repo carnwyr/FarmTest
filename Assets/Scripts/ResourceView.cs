@@ -17,8 +17,15 @@ public class ResourceView : MonoBehaviour
 
         _label.text = _model.Name;
         _model.Count
-            .Subscribe(x => _count.text = x.ToString())
+            .Subscribe(x => _count.text = GetCountText(x))
             .AddTo(_subscriptions);
+    }
+
+    private string GetCountText(int count) {
+        if (_model.Goal > 0) {
+            return $"{count}/{_model.Goal}";
+        }
+        return count.ToString();
     }
 
     private void OnDestroy() {

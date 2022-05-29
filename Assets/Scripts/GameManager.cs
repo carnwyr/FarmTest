@@ -26,17 +26,18 @@ public class GameManager : MonoBehaviour
         _producerFactory = new ResourceProducerFactory(_resourceController);
         _levelController = new LevelController(_levelConfig, _producerFactory, _fieldCanvas);
         
-        CreateResourceCounters();
+        CreateResourceCounters(_levelController.GetCurrentGoal());
         CreateSpawnButtons();
         CreateSellButtons();
 
-        _levelController.StartNextLevel();
+        _levelController.StartLevel();
     }
 
-    private void CreateResourceCounters() {
+    private void CreateResourceCounters(int goal) {
         _resourceCounter.gameObject.SetActive(false);
         foreach (var resource in _resourceController.Resources) {
-            var model = new ResourceModel(resource.Key, resource.Value);
+            // TODO remove hardcode
+            var model = new ResourceModel(resource.Key, resource.Value, resource.Key == "Coin" ? goal : 0);
             var view = Instantiate(_resourceCounter, _resourceCounter.transform.parent);
             view.Initialize(model);
             view.gameObject.SetActive(true);
@@ -73,42 +74,3 @@ public class GameManager : MonoBehaviour
         }        
     }
 }
-
-public class LevelController {
-    private readonly LevelConfig _config;
-    private readonly ResourceProducerFactory _producerFactory;
-
-    private GridLayoutGroup _field;
-    private int _currentLevel;
-
-    public LevelController(LevelConfig config, ResourceProducerFactory producerFactory, Canvas canvas) {
-        _config = config;
-        _producerFactory = producerFactory;
-
-        _field = UnityEngine.Object.Instantiate(_config.FieldPrefab, canvas.transform);
-    }
-
-    public void StartNextLevel() {
-        InitField();
-    }
-
-    private void InitField() {
-        var sizeX = _config.Levels[_currentLevel].SizeX;
-        var sizeY = _config.Levels[_currentLevel].SizeY;
-        // TODO alter cell size according to the screen size
-        _field.cellSize = _config.TilePrefab.GetComponent<RectTransform>().rect.size;
-        _field.constraintCount = sizeX;
-
-        for (var i = 0; i < sizeX; i++) {
-            for (var j = 0; j < sizeY; j++) {
-                var model = new FieldTileModel(_producerFactory);
-                // TODO tile pooling
-                var view = UnityEngine.Object.Instantiate(_config.TilePrefab, _field.transform);
-                view.Initialize(model);
-            }
-        }
-    }
-}
-
-
-
