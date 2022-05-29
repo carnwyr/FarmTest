@@ -1,19 +1,14 @@
 using UniRx;
-using System;
 
-public class ResourceModel : IDisposable
+public class ResourceModel
 {
     public ReactiveProperty<int> Count { get; }
-    public int Goal { get; }
+    public ReactiveProperty<int> Goal { get; }
     public string Name { get; }
 
-    public ResourceModel(string name, ReactiveProperty<int> count, int goal = 0) {
+    public ResourceModel(string name, ReactiveProperty<int> count, ReactiveProperty<int> goal) {
         Name = name;
         Count = count;
         Goal = goal;
-    }
-
-    public void Dispose() {
-        Count.Dispose();
     }
 }

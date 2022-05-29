@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UniRx;
-using System;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,6 +11,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private ResourceProducerConfig _resourceProducerConfig;
     [SerializeField] private LevelConfig _levelConfig;
     [SerializeField] private Canvas _fieldCanvas;
+    [SerializeField] private Canvas _uiCanvas;
+    [SerializeField] private VictoryView _victoryView;
 
     private readonly CompositeDisposable _subscriptions = new CompositeDisposable();
     
@@ -24,20 +24,32 @@ public class GameManager : MonoBehaviour
     {
         _resourceController = new ResourceController(_resourceConfig);
         _producerFactory = new ResourceProducerFactory(_resourceController);
-        _levelController = new LevelController(_levelConfig, _producerFactory, _fieldCanvas);
-        
-        CreateResourceCounters(_levelController.GetCurrentGoal());
+        _levelController = new LevelController(_levelConfig, _producerFactory, _resourceController, _fieldCanvas);
+
+        _levelController.AddTo(_subscriptions);
+
+        CreateResourceCounters();
         CreateSpawnButtons();
         CreateSellButtons();
 
+        _levelController.FinishLevel
+            .Subscribe(_ => FinishLevel())
+            .AddTo(_subscriptions);
+
+        StartLevel();
+    }
+
+    private void StartLevel() {
+        _resourceController.Reset();
         _levelController.StartLevel();
     }
 
-    private void CreateResourceCounters(int goal) {
+    private void CreateResourceCounters() {
         _resourceCounter.gameObject.SetActive(false);
         foreach (var resource in _resourceController.Resources) {
             // TODO remove hardcode
-            var model = new ResourceModel(resource.Key, resource.Value, resource.Key == "Coin" ? goal : 0);
+            var goal = resource.Key == "Coin" ? _levelController.ResourceGoal : new ReactiveProperty<int>();
+            var model = new ResourceModel(resource.Key, resource.Value, goal);
             var view = Instantiate(_resourceCounter, _resourceCounter.transform.parent);
             view.Initialize(model);
             view.gameObject.SetActive(true);
@@ -72,5 +84,17 @@ public class GameManager : MonoBehaviour
                 .Subscribe(_ => _resourceController.Sell(conf))
                 .AddTo(_subscriptions);
         }        
+    }
+
+    private void FinishLevel() {
+        var canContinue = _levelController.CanContinue();
+        var model = new VictoryModel(canContinue);
+        var view = Instantiate(_victoryView, _uiCanvas.transform);
+        view.Initialize(model);
+        view.ContinueGame
+            .First()
+            .Do(_ => GameObject.Destroy(view.gameObject))
+            .Subscribe(_ => StartLevel())
+            .AddTo(_subscriptions);
     }
 }

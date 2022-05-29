@@ -13,17 +13,17 @@ public class ResourceView : MonoBehaviour
 
     public void Initialize(ResourceModel model) {
         _model = model;
-        _model.AddTo(_subscriptions);
 
         _label.text = _model.Name;
         _model.Count
-            .Subscribe(x => _count.text = GetCountText(x))
+            .CombineLatest(_model.Goal, (count, goal) => (count, goal))
+            .Subscribe(x => _count.text = GetCountText(x.count, x.goal))
             .AddTo(_subscriptions);
     }
 
-    private string GetCountText(int count) {
-        if (_model.Goal > 0) {
-            return $"{count}/{_model.Goal}";
+    private string GetCountText(int count, int goal) {
+        if (goal > 0) {
+            return $"{count}/{goal}";
         }
         return count.ToString();
     }

@@ -31,4 +31,10 @@ public class ResourceController {
         TrySpendResource(data.Name, amount);
         AddResource(data.PriceResource, data.Price * amount);
     }
+
+    public void Reset() {
+        foreach (var res in _resources) {
+            res.Value.Value = 0;
+        }
+    }
 }
