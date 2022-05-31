@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
     private readonly CompositeDisposable _subscriptions = new CompositeDisposable();
     
     private ResourceController _resourceController;
+    private SaveController _saveController;
     private LevelController _levelController;
     private ResourceProducerFactory _producerFactory;
 
@@ -25,6 +26,7 @@ public class GameManager : MonoBehaviour
         _resourceController = new ResourceController(_resourceConfig);
         _producerFactory = new ResourceProducerFactory(_resourceController);
         _levelController = new LevelController(_levelConfig, _producerFactory, _resourceController, _fieldCanvas);
+        _saveController = new SaveController(_resourceController, _levelController);
 
         _levelController.AddTo(_subscriptions);
 

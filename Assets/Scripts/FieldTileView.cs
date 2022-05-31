@@ -13,7 +13,6 @@ public class FieldTileView : MonoBehaviour, IDisposable
 
     public void Initialize(FieldTileModel model) {
         _model = model;
-        _model.AddTo(_subscriptions);
 
         _model.Producer
             .Where(x => x != null)

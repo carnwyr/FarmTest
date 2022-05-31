@@ -1,8 +1,6 @@
-using System;
 using UniRx;
-using UnityEngine;
 
-public class FieldTileModel : IDisposable 
+public class FieldTileModel 
 {
     private ReactiveProperty<ResourceProducerModel> _producer = new ReactiveProperty<ResourceProducerModel>();
 
@@ -24,9 +22,5 @@ public class FieldTileModel : IDisposable
   
     private void SpawnProducer() {
         _producer.Value = Factory.GetResourceProducerModel();
-    }
-
-    public void Dispose() {
-        _producer.Dispose();
     }
 }

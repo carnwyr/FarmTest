@@ -16,11 +16,15 @@ public class ResourceProducerModel : IDisposable
     private int _produceTime;
     private IDisposable _productionCycle;
     private UniTask _consumeCycle;
-    private DateTime _totalProductionEndTime;
+    private ReactiveProperty<DateTime> _productionEndTime = new ReactiveProperty<DateTime>();
     private ReactiveProperty<int> _productionCyclesCount = new ReactiveProperty<int>();
 
     public ReactiveProperty<float> ProduceProgress { get; } = new ReactiveProperty<float>();
     public ReactiveProperty<float> ConsumableLeft { get; } = new ReactiveProperty<float>();
+
+    public string Name => _name;
+    public IReadOnlyReactiveProperty<DateTime> ProductionEndTime => _productionEndTime;
+    public IReadOnlyReactiveProperty<int> ProductionCyclesCount => _productionCyclesCount;
 
     public bool NeedsConsumable { get; }
 
@@ -56,10 +60,10 @@ public class ResourceProducerModel : IDisposable
             .First()
             .ToUniTask();
         await _consumeCycle;
-        var productionEndTime = DateTime.UtcNow.AddSeconds(_produceTime);
+        _productionEndTime.Value = DateTime.UtcNow.AddSeconds(_produceTime);
         _productionCycle = Observable.EveryUpdate()
             .Subscribe(_ => {
-                var timeLeft = (float)(productionEndTime - DateTime.UtcNow).TotalSeconds;
+                var timeLeft = (float)(_productionEndTime.Value - DateTime.UtcNow).TotalSeconds;
                 var fractionLeft = Mathf.Clamp(timeLeft, 0, _produceTime) / _produceTime;
                 ProduceProgress.Value = 1 - fractionLeft;
 

@@ -5,6 +5,7 @@ public class ResourceController {
     private readonly Dictionary<string, ReactiveProperty<int>> _resources = new Dictionary<string, ReactiveProperty<int>>();
 
     public Dictionary<string, ReactiveProperty<int>> Resources => _resources;
+    public ReactiveCommand<(string, int)> ResourceAmountChanged { get; } = new ReactiveCommand<(string, int)>();
 
     public ResourceController(ResourceConfig resourceConfig) {
         foreach (var resource in resourceConfig.Resources) {
@@ -15,12 +16,14 @@ public class ResourceController {
     public void AddResource(string resource, int amount) {
         if (_resources.ContainsKey(resource)) {
             _resources[resource].Value += amount;
+            ResourceAmountChanged.Execute((resource, _resources[resource].Value));
         }
     }
 
     public bool TrySpendResource(string resource, int amount) {
         if (_resources.ContainsKey(resource) && _resources[resource].Value >= amount) {
             _resources[resource].Value -= amount;
+            ResourceAmountChanged.Execute((resource, _resources[resource].Value));
             return true;
         }
         return false;
@@ -35,6 +38,7 @@ public class ResourceController {
     public void Reset() {
         foreach (var res in _resources) {
             res.Value.Value = 0;
+            ResourceAmountChanged.Execute((res.Key, res.Value.Value));
         }
     }
 }

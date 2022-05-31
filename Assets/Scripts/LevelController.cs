@@ -11,12 +11,15 @@ public class LevelController : IDisposable {
     private readonly ResourceController _resourceController;
 
     private GridLayoutGroup _field;
-    private int _currentLevel;
+    private ReactiveProperty<int> _currentLevel = new ReactiveProperty<int>();
 
+    public IReadOnlyReactiveProperty<int> CurrentLevel => _currentLevel;
     public ReactiveProperty<int> ResourceGoal { get; } = new ReactiveProperty<int>();
     public ReactiveCommand<Unit> FinishLevel { get; } = new ReactiveCommand<Unit>();
+    public ReactiveCommand<(int, ResourceProducerModel)> ChangeTileContent { get; } = new ReactiveCommand<(int, ResourceProducerModel)>();
 
-    public LevelController(LevelConfig config, ResourceProducerFactory producerFactory, ResourceController resourceController, Canvas canvas) {
+    public LevelController(LevelConfig config, ResourceProducerFactory producerFactory, ResourceController resourceController, Canvas canvas)
+    {
         _config = config;
         _producerFactory = producerFactory;
         _resourceController = resourceController;
@@ -25,12 +28,12 @@ public class LevelController : IDisposable {
     }
 
     public bool CanContinue() {
-        return _currentLevel < _config.Levels.Count;
+        return _currentLevel.Value < _config.Levels.Count;
     }
 
     public void StartLevel() {
         InitField();
-        ResourceGoal.Value = _config.Levels[_currentLevel].Goal;
+        ResourceGoal.Value = _config.Levels[_currentLevel.Value].Goal;
         // TODO remove hardcode
         // TODO move check to resource controller
         _resourceController.Resources["Coin"]
@@ -42,18 +45,25 @@ public class LevelController : IDisposable {
 
     private void InitField() {
         ClearField();
-        var sizeX = _config.Levels[_currentLevel].SizeX;
-        var sizeY = _config.Levels[_currentLevel].SizeY;
+        var sizeX = _config.Levels[_currentLevel.Value].SizeX;
+        var sizeY = _config.Levels[_currentLevel.Value].SizeY;
         // TODO alter cell size according to the screen size
         _field.cellSize = _config.TilePrefab.GetComponent<RectTransform>().rect.size;
         _field.constraintCount = sizeX;
 
         for (var i = 0; i < sizeX; i++) {
             for (var j = 0; j < sizeY; j++) {
+                var index = i * sizeX + j;
                 var model = new FieldTileModel(_producerFactory);
                 // TODO tile pooling
                 var view = UnityEngine.Object.Instantiate(_config.TilePrefab, _field.transform);
                 view.Initialize(model);
+
+                model.Producer
+                    .Where(x => x != null)
+                    .First()
+                    .Subscribe(x => ChangeTileContent.Execute((index, x)))
+                    .AddTo(_subscriptions);
             }
         }
     }
@@ -65,7 +75,7 @@ public class LevelController : IDisposable {
     }
 
     private void WinLevel() {
-        _currentLevel++;
+        _currentLevel.Value++;
         FinishLevel.Execute(Unit.Default);
     }
 

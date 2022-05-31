@@ -1289,7 +1289,7 @@ MonoBehaviour:
   _levelConfig: {fileID: 11400000, guid: cfce8f77f64130740946e970442fa04d, type: 2}
   _fieldCanvas: {fileID: 1813195081}
   _uiCanvas: {fileID: 964097251}
-  _victoryView: {fileID: 4568888497422820967, guid: ca5cead1183666141b603a749ce0c312, type: 3}
+  _victoryView: {fileID: 2088297336563808456, guid: ca5cead1183666141b603a749ce0c312, type: 3}
 --- !u!4 &1787887395
 Transform:
   m_ObjectHideFlags: 0
