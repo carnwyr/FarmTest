@@ -37,10 +37,13 @@ public class SaveController : IDisposable {
 
     private SavedData _savedData;
 
-    public SaveController(ResourceController resourceController, LevelController levelController) {
+    public SaveController(ResourceController resourceController, LevelController levelController, ResourceProducerFactory factory) {
         if (!TryLoadData()) {
             _savedData = GetDefaultData(resourceController);
             SaveData();
+        }
+        else {
+            InitServices(resourceController, levelController, factory);
         }
 
         resourceController.ResourceAmountChanged
@@ -61,8 +64,8 @@ public class SaveController : IDisposable {
         {
             File.Create(_filePath).Close();
         }
-        var dataString = JsonUtility.ToJson(_savedData);
-        File.WriteAllText(_filePath, dataString);
+        var jsonString = JsonUtility.ToJson(_savedData);
+        File.WriteAllText(_filePath, jsonString);
     }
 
     public bool TryLoadData() {
@@ -70,6 +73,9 @@ public class SaveController : IDisposable {
         {
             return false;
         }
+
+        var jsonString = File.ReadAllText(_filePath);
+        _savedData = JsonUtility.FromJson<SavedData>(jsonString);
 
         return true;
     }
@@ -111,6 +117,30 @@ public class SaveController : IDisposable {
         _savedData.Field.Add(tileData);
         SaveData();
 
+        SubscribeOnTileContent(tileData, content);
+    }
+
+    private void InitServices(ResourceController resourceController, LevelController levelController, ResourceProducerFactory factory) {
+        var producers = new List<(int, ResourceProducerModel)>();
+        foreach (var tileData in _savedData.Field) {
+            var productionEndTime = new DateTime(tileData.ProductionEndTime);
+            var content = factory.GetResourceProducerModel(tileData.ProducerName, productionEndTime, tileData.ProductionCyclesCount);
+            producers.Add((tileData.Index, content));
+
+            SubscribeOnTileContent(tileData, content);
+        }
+        levelController.LoadData(_savedData.CurrentLevel, producers);
+
+        var resources = new Dictionary<string, int>();
+        foreach (var res in _savedData.Resources) {
+            if (resourceController.Resources.ContainsKey(res.Name)) {
+                resources.Add(res.Name, res.Amount);
+            }
+        }
+        resourceController.LoadData(resources);
+    }
+
+    private void SubscribeOnTileContent(TileData tileData, ResourceProducerModel content) {
         content.ProductionCyclesCount
             .Do(x => tileData.ProductionCyclesCount = x)
             .Subscribe(x => SaveData())
@@ -120,7 +150,7 @@ public class SaveController : IDisposable {
             .Do(x => tileData.ProductionEndTime = x.Ticks)
             .Subscribe(x => SaveData())
             .AddTo(_subscriptions);
-    }
+    } 
 
     public void Dispose() {
         _subscriptions.Dispose();

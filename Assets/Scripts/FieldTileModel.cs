@@ -7,8 +7,9 @@ public class FieldTileModel
     public IReadOnlyReactiveProperty<ResourceProducerModel> Producer => _producer;
     public ResourceProducerFactory Factory { get; }
 
-    public FieldTileModel(ResourceProducerFactory factory) {
+    public FieldTileModel(ResourceProducerFactory factory, ResourceProducerModel producer = null) {
         Factory = factory;
+        _producer.Value = producer;
     }
 
     public void OnTap() {

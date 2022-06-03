@@ -40,8 +40,24 @@ public class ResourceProducerModel : IDisposable
         _produceTime = data.ProduceTime;
 
         NeedsConsumable = !string.IsNullOrEmpty(_consumeResource);
+    }
 
-        Produce().Forget();
+    public ResourceProducerModel(ResourceProducerData data, ResourceController resourceController, 
+        DateTime productionEndTime, int productionCyclesCount) : this(data, resourceController)
+    {
+        _productionEndTime.Value = productionEndTime;
+        _productionCyclesCount.Value = productionCyclesCount;
+
+        var timeLeft = (float)(_productionEndTime.Value - DateTime.UtcNow).TotalSeconds;
+        var fractionLeft = Mathf.Clamp(timeLeft, 0, _produceTime) / _produceTime;
+        ProduceProgress.Value = 1 - fractionLeft;
+
+        if (NeedsConsumable)
+        {
+            var totalCycles = _consumeTime / _produceTime;
+            var currentCycleLeft = 1f / totalCycles * fractionLeft;
+            ConsumableLeft.Value = (float)(_productionCyclesCount.Value - 1) / totalCycles + currentCycleLeft;
+        }
     }
 
     public void OnTap() {
@@ -53,7 +69,7 @@ public class ResourceProducerModel : IDisposable
         }
     }
 
-    private async UniTask Produce() {
+    public async UniTask StartProduction() {
         ProduceProgress.Value = 0;
         _consumeCycle = _productionCyclesCount
             .Where(x => x > 0 || !NeedsConsumable)
@@ -61,6 +77,10 @@ public class ResourceProducerModel : IDisposable
             .ToUniTask();
         await _consumeCycle;
         _productionEndTime.Value = DateTime.UtcNow.AddSeconds(_produceTime);
+        Produce();
+    } 
+
+    public void Produce() {        
         _productionCycle = Observable.EveryUpdate()
             .Subscribe(_ => {
                 var timeLeft = (float)(_productionEndTime.Value - DateTime.UtcNow).TotalSeconds;
@@ -76,10 +96,6 @@ public class ResourceProducerModel : IDisposable
 
                 if (Mathf.Approximately(ProduceProgress.Value, 1)) {
                     _productionCycle?.Dispose();
-                    if (NeedsConsumable)
-                    {
-                        _productionCyclesCount.Value--;
-                    }
                 }
             });
     }
@@ -97,7 +113,11 @@ public class ResourceProducerModel : IDisposable
 
     public void Collect() {
         _resourceController.AddResource(_produceResource, _produceAmount);
-        Produce().Forget();
+        if (NeedsConsumable)
+        {
+            _productionCyclesCount.Value--;
+        }
+        StartProduction().Forget();
     }
 
     public void Dispose() {

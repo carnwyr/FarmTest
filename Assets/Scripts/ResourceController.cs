@@ -13,6 +13,12 @@ public class ResourceController {
         }
     }
 
+    public void LoadData(Dictionary<string, int> resources) {
+        foreach (var res in resources.Keys) {
+            _resources[res].Value = resources[res];
+        }
+    }
+
     public void AddResource(string resource, int amount) {
         if (_resources.ContainsKey(resource)) {
             _resources[resource].Value += amount;

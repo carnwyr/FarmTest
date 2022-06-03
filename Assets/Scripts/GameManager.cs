@@ -24,9 +24,9 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         _resourceController = new ResourceController(_resourceConfig);
-        _producerFactory = new ResourceProducerFactory(_resourceController);
+        _producerFactory = new ResourceProducerFactory(_resourceController, _resourceProducerConfig);
         _levelController = new LevelController(_levelConfig, _producerFactory, _resourceController, _fieldCanvas);
-        _saveController = new SaveController(_resourceController, _levelController);
+        _saveController = new SaveController(_resourceController, _levelController, _producerFactory);
 
         _levelController.AddTo(_subscriptions);
 
@@ -42,7 +42,6 @@ public class GameManager : MonoBehaviour
     }
 
     private void StartLevel() {
-        _resourceController.Reset();
         _levelController.StartLevel();
     }
 
@@ -66,7 +65,7 @@ public class GameManager : MonoBehaviour
             // TODO init
             newButton.GetComponentInChildren<Text>().text = conf.Name;
             newButton.OnClickAsObservable()
-                .Subscribe(_ => _producerFactory.SetProducerData(conf))
+                .Subscribe(_ => _producerFactory.SetProducerData(conf.Name))
                 .AddTo(_subscriptions);
         }        
     }

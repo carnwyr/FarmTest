@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UniRx;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 // TODO available levels check
 public class LevelController : IDisposable {
@@ -11,6 +13,7 @@ public class LevelController : IDisposable {
     private readonly ResourceController _resourceController;
 
     private GridLayoutGroup _field;
+    private List<(int, ResourceProducerModel)> _loadedTileContents;
     private ReactiveProperty<int> _currentLevel = new ReactiveProperty<int>();
 
     public IReadOnlyReactiveProperty<int> CurrentLevel => _currentLevel;
@@ -25,6 +28,11 @@ public class LevelController : IDisposable {
         _resourceController = resourceController;
 
         _field = UnityEngine.Object.Instantiate(_config.FieldPrefab, canvas.transform);
+    }
+
+    public void LoadData(int currentLevel, List<(int, ResourceProducerModel)> loadedTiles) {
+        _currentLevel.Value = currentLevel;
+        _loadedTileContents = loadedTiles;
     }
 
     public bool CanContinue() {
@@ -54,7 +62,13 @@ public class LevelController : IDisposable {
         for (var i = 0; i < sizeX; i++) {
             for (var j = 0; j < sizeY; j++) {
                 var index = i * sizeX + j;
-                var model = new FieldTileModel(_producerFactory);
+                ResourceProducerModel loadedTileContent = null;
+                if(_loadedTileContents != null && _loadedTileContents.Any(x => x.Item1 == index)) {
+                    var loadedTile = _loadedTileContents.First(x => x.Item1 == index);
+                    loadedTileContent = loadedTile.Item2;
+                    _loadedTileContents.Remove(loadedTile);
+                }
+                var model = new FieldTileModel(_producerFactory, loadedTileContent);
                 // TODO tile pooling
                 var view = UnityEngine.Object.Instantiate(_config.TilePrefab, _field.transform);
                 view.Initialize(model);
@@ -76,6 +90,7 @@ public class LevelController : IDisposable {
 
     private void WinLevel() {
         _currentLevel.Value++;
+        _resourceController.Reset();
         FinishLevel.Execute(Unit.Default);
     }
 
