@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb1d5f25d0cf4314aa8953fd02f57f7a, type: 3}
+  m_Name: UiConfig
+  m_EditorClassIdentifier: 
+  _spawnButton: {fileID: 3087653428372071255, guid: fbcb38a5d8f0c7740a384a67c9652c4a, type: 3}
+  _sellButton: {fileID: 122700079733013996, guid: 99f8a3664f88ac84cb8e79fbb423f923, type: 3}
+  _resourceCounter: {fileID: 955826143166083946, guid: 573410a04bb034f43a8b442921f664d8, type: 3}
+  _resourceRoot: {fileID: 5872376195755518271, guid: d118a1a92f68ac94f8ce74d2527d4294, type: 3}
+  _sideBar: {fileID: 5209408192746882683, guid: 046ecbfd32e7cd842b6b558aa819c803, type: 3}
+  _sideBarHeader: {fileID: 7179367431996419328, guid: 6598f201f6ba2b14f91e44383f3b52dd, type: 3}
+  _spawnHeader: Buy
+  _sellHeader: Sell

@@ -11,6 +11,7 @@ public class LevelController : IDisposable {
     private readonly LevelConfig _config;
     private readonly ResourceProducerFactory _producerFactory;
     private readonly ResourceController _resourceController;
+    private readonly string _targetResource;
 
     private GridLayoutGroup _field;
     private List<(int, ResourceProducerModel)> _loadedTileContents;
@@ -21,11 +22,12 @@ public class LevelController : IDisposable {
     public ReactiveCommand<Unit> FinishLevel { get; } = new ReactiveCommand<Unit>();
     public ReactiveCommand<(int, ResourceProducerModel)> ChangeTileContent { get; } = new ReactiveCommand<(int, ResourceProducerModel)>();
 
-    public LevelController(LevelConfig config, ResourceProducerFactory producerFactory, ResourceController resourceController, Canvas canvas)
+    public LevelController(LevelConfig config, ResourceProducerFactory producerFactory, ResourceController resourceController, Canvas canvas, string targetResource)
     {
         _config = config;
         _producerFactory = producerFactory;
         _resourceController = resourceController;
+        _targetResource = targetResource;
 
         _field = UnityEngine.Object.Instantiate(_config.FieldPrefab, canvas.transform);
     }
@@ -42,9 +44,8 @@ public class LevelController : IDisposable {
     public void StartLevel() {
         InitField();
         ResourceGoal.Value = _config.Levels[_currentLevel.Value].Goal;
-        // TODO remove hardcode
         // TODO move check to resource controller
-        _resourceController.Resources["Coin"]
+        _resourceController.Resources[_targetResource]
             .Where(x => x >= ResourceGoal.Value)
             .First()
             .Subscribe(_ => WinLevel())
