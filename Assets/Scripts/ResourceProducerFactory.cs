@@ -1,7 +1,7 @@
 using System;
 using Cysharp.Threading.Tasks;
 using System.Linq;
-using UnityEngine;
+using UniRx;
 
 public class ResourceProducerFactory 
 {
@@ -10,12 +10,15 @@ public class ResourceProducerFactory
 
     private ResourceProducerData _producerData;
 
+    public ReactiveProperty<string> CurrentProducer { get; } = new ReactiveProperty<string>();
+
     public ResourceProducerFactory(ResourceController resourceController, ResourceProducerConfig config) {
         _resourceController = resourceController;
         _config = config;
     }
 
     public void SetProducerData(string producerName) {
+        CurrentProducer.Value = producerName;
         _producerData = _config.ResourceProducers.FirstOrDefault(x => x.Name == producerName);
     }
 

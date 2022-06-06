@@ -1,10 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UniRx;
+using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private Button _spawnButton;
+    [SerializeField] private SpawnButtonView _spawnButton;
     [SerializeField] private Button _sellButton;
     [SerializeField] private ResourceView _resourceCounter;
     [SerializeField] private ResourceConfig _resourceConfig;
@@ -60,14 +61,12 @@ public class GameManager : MonoBehaviour
     private void CreateSpawnButtons() {
         _spawnButton.gameObject.SetActive(false);
         foreach (var conf in _resourceProducerConfig.ResourceProducers) {
-            var newButton = Instantiate(_spawnButton, _spawnButton.transform.parent);
-            newButton.gameObject.SetActive(true);
-            // TODO init
-            newButton.GetComponentInChildren<Text>().text = conf.Name;
-            newButton.OnClickAsObservable()
-                .Subscribe(_ => _producerFactory.SetProducerData(conf.Name))
-                .AddTo(_subscriptions);
-        }        
+            var model = new SpawnButtonModel(conf.Name, _producerFactory);
+            var view = Instantiate(_spawnButton, _spawnButton.transform.parent);
+            view.gameObject.SetActive(true);
+            view.Initialize(model);
+        }
+        _producerFactory.SetProducerData(_resourceProducerConfig.ResourceProducers.First().Name);
     }
 
     private void CreateSellButtons() {
