@@ -50,12 +50,6 @@ public class ResourceController {
         AddResource(priceResource, price * amount);
     }
 
-    public void Sell(ResourceData data) {
-        var amount = _resources[data.Name].Value;
-        TrySpendResource(data.Name, amount);
-        AddResource(data.PriceResource, data.Price * amount);
-    }
-
     public void Reset() {
         foreach (var res in _resources) {
             res.Value.Value = 0;

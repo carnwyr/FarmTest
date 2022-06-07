@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-// TODO available levels check
 public class LevelController : IDisposable {
     private readonly CompositeDisposable _subscriptions = new CompositeDisposable();
     private readonly LevelConfig _config;
@@ -42,9 +41,12 @@ public class LevelController : IDisposable {
     }
 
     public void StartLevel() {
+        if (_currentLevel.Value >= _config.Levels.Count) {
+            return;
+        }
+
         InitField();
         ResourceGoal.Value = _config.Levels[_currentLevel.Value].Goal;
-        // TODO move check to resource controller
         _resourceController.Resources[_targetResource]
             .Where(x => x >= ResourceGoal.Value)
             .First()
@@ -52,12 +54,12 @@ public class LevelController : IDisposable {
             .AddTo(_subscriptions);
     }
 
+    // TODO tile pooling
+    // TODO tile lifetime
     private void InitField() {
         ClearField();
         var sizeX = _config.Levels[_currentLevel.Value].SizeX;
         var sizeY = _config.Levels[_currentLevel.Value].SizeY;
-        // TODO alter cell size according to the screen size
-        _field.cellSize = _config.TilePrefab.GetComponent<RectTransform>().rect.size;
         _field.constraintCount = sizeX;
 
         for (var i = 0; i < sizeX; i++) {
@@ -70,7 +72,6 @@ public class LevelController : IDisposable {
                     _loadedTileContents.Remove(loadedTile);
                 }
                 var model = new FieldTileModel(_producerFactory, loadedTileContent);
-                // TODO tile pooling
                 var view = UnityEngine.Object.Instantiate(_config.TilePrefab, _field.transform);
                 view.Initialize(model);
 

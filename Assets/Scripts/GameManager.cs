@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
     private SaveController _saveController;
     private UiController _uiController;
 
+    // TODO dependency injection
     void Start()
     {
         _resourceController = new ResourceController(_resourceConfig);
