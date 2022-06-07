@@ -82,6 +82,8 @@ public class LevelController : IDisposable {
                     .AddTo(_subscriptions);
             }
         }
+        
+        _loadedTileContents?.Clear();
     }
 
     private void ClearField() {
