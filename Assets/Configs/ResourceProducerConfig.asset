@@ -19,13 +19,21 @@ MonoBehaviour:
     _consumeTime: 0
     _produceResource: Wheat
     _produceAmount: 1
-    _produceTime: 1
+    _produceTime: 10
     _spawnObject: {fileID: 8492305237754244994, guid: ce3b50c76ff63be479f375a83082b519, type: 3}
   - _name: Cow
     _consumeResource: Wheat
     _consumeAmout: 1
-    _consumeTime: 4
+    _consumeTime: 20
     _produceResource: Milk
     _produceAmount: 1
-    _produceTime: 2
+    _produceTime: 20
+    _spawnObject: {fileID: 8492305237754244994, guid: 2d1c7c7a2918cf84ca83457cda550869, type: 3}
+  - _name: Chicken
+    _consumeResource: Wheat
+    _consumeAmout: 1
+    _consumeTime: 30
+    _produceResource: Egg
+    _produceAmount: 1
+    _produceTime: 10
     _spawnObject: {fileID: 8492305237754244994, guid: 2d1c7c7a2918cf84ca83457cda550869, type: 3}
